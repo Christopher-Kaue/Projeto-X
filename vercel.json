@@ -1,6 +1,0 @@
-{
-  "rewrites": [
-    { "source": "/login.jsp", "destination": "https://projeto-x.onrender.com/login.jsp" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
-}
