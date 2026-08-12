@@ -265,23 +265,32 @@
                                     <th>Avaliação</th>
                                     <th>Nota máxima</th>
                                     <th>Nota em decimal</th>
+                                    <th>Nota em percentual</th>
                                     <th></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <% for (SubAvaliacao sub : avComSub.getSubAvaliacoes()) {
                                     String maxVal = formatNum(sub.getMaxPontos());
-                                    String notaExibida = "";
+                                    String notaDecExibida = "";
+                                    String notaPctExibida = "";
                                     if (sub.getNotaDecimal() != null) {
-                                        notaExibida = formatNum(sub.getNotaDecimal());
-                                    } else if (sub.getNotaPercentual() != null && sub.getMaxPontos() > 0) {
-                                        notaExibida = formatNum(sub.getNotaPercentual() / 100.0 * sub.getMaxPontos());
+                                        notaDecExibida = formatNum(sub.getNotaDecimal());
+                                        if (sub.getMaxPontos() > 0) {
+                                            notaPctExibida = formatNum(sub.getNotaDecimal() / sub.getMaxPontos() * 100.0);
+                                        }
+                                    } else if (sub.getNotaPercentual() != null) {
+                                        notaPctExibida = formatNum(sub.getNotaPercentual());
+                                        if (sub.getMaxPontos() > 0) {
+                                            notaDecExibida = formatNum(sub.getNotaPercentual() / 100.0 * sub.getMaxPontos());
+                                        }
                                     }
                                 %>
                                 <tr>
                                     <td><%= sub.getTitulo() %></td>
                                     <td><%= maxVal %></td>
-                                    <td><%= notaExibida.isEmpty() ? "—" : notaExibida %></td>
+                                    <td><%= notaDecExibida.isEmpty() ? "—" : notaDecExibida %></td>
+                                    <td><%= notaPctExibida.isEmpty() ? "—" : notaPctExibida %></td>
                                     <td>
                                         <a href="calcular-media.jsp?ucId=<%= ucId %>&action=removerSub&subId=<%= sub.getId() %>"
                                            class="btn-remove-sub" title="Remover avaliação"
@@ -291,7 +300,7 @@
                                 <% } %>
                                 <% if (avComSub.getSubAvaliacoes().isEmpty()) { %>
                                 <tr>
-                                    <td colspan="4" class="sub-table-empty">Nenhuma avaliação adicionada.</td>
+                                    <td colspan="5" class="sub-table-empty">Nenhuma avaliação adicionada.</td>
                                 </tr>
                                 <% } %>
                             </tbody>
