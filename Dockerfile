@@ -6,10 +6,11 @@ COPY frontend frontend
 WORKDIR /app/backend
 RUN mvn clean package -DskipTests -q
 
-FROM tomcat:9.0-jdk17-temurin
-ENV JAVA_OPTS="-Xmx512m -Xms256m"
-RUN rm -rf /usr/local/tomcat/webapps/*
-COPY --from=build /app/backend/target/projeto-x.war /usr/local/tomcat/webapps/ROOT.war
-COPY render-start.sh /render-start.sh
-RUN chmod +x /render-start.sh
-CMD ["/render-start.sh"]
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+RUN apk add --no-cache wget \
+ && wget -q https://repo1.maven.org/maven2/org/eclipse/jetty/jetty-runner/9.4.54.v20240208/jetty-runner-9.4.54.v20240208.jar -O jetty-runner.jar
+COPY --from=build /app/backend/target/projeto-x.war app.war
+ENV PORT=8080
+EXPOSE 8080
+CMD ["sh", "-c", "java -Xmx512m -jar jetty-runner.jar --port ${PORT} --path / app.war"]
