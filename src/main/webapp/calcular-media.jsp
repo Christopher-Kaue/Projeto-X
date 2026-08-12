@@ -71,7 +71,7 @@
                 }
             }
             store.atualizarUC(uc);
-            response.sendRedirect("dashboard.jsp");
+            response.sendRedirect("dashboard.jsp?msg=media_salva");
             return;
         }
 
@@ -128,7 +128,10 @@
             <div class="uc-titulo"><%= uc.getNome() %></div>
             <div class="uc-semestre"><%= uc.getSemestre() %>º Semestre</div>
         </div>
-        <jsp:include page="includes/logo.jsp"/>
+        <div class="header-right">
+            <jsp:include page="includes/logo.jsp"/>
+            <a href="logout.jsp" class="btn-sair">Sair</a>
+        </div>
     </header>
 
     <div class="media-content">

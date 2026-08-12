@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: projeto-x
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /login.jsp

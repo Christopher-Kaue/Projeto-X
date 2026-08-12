@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "public": true,
+  "buildCommand": "echo JSP requires Java runtime - use Render deploy",
+  "outputDirectory": "vercel-public",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}

@@ -29,7 +29,7 @@
                     store.criarNovaUC(nomeUC.trim(), semestre, ra);
                 } catch (NumberFormatException ignored) {}
             }
-            response.sendRedirect("dashboard.jsp");
+            response.sendRedirect("dashboard.jsp?msg=uc_adicionada");
             return;
         }
 
@@ -45,7 +45,7 @@
                     store.atualizarUC(uc);
                 } catch (NumberFormatException ignored) {}
             }
-            response.sendRedirect("dashboard.jsp");
+            response.sendRedirect("dashboard.jsp?msg=uc_editada");
             return;
         }
 
@@ -54,7 +54,7 @@
             if (ucId != null) {
                 store.removerUC(ra, ucId);
             }
-            response.sendRedirect("dashboard.jsp");
+            response.sendRedirect("dashboard.jsp?msg=uc_excluida");
             return;
         }
 
@@ -72,11 +72,12 @@
                 session.setAttribute("nome", aluno.getNome());
                 session.setAttribute("curso", aluno.getCurso());
             }
-            response.sendRedirect("dashboard.jsp");
+            response.sendRedirect("dashboard.jsp?msg=config_salva");
             return;
         }
     }
 
+    String msg = request.getParameter("msg");
     Map<Integer, List<UC>> ucsPorSemestre = store.agruparPorSemestre(ra);
     List<Integer> semestres = new java.util.ArrayList<>(ucsPorSemestre.keySet());
     semestres.sort(Collections.reverseOrder());
@@ -96,8 +97,23 @@
 
     <header class="dashboard-header">
         <h2>Bem vindo, <%= nome %>!</h2>
-        <jsp:include page="includes/logo.jsp"/>
+        <div class="header-right">
+            <jsp:include page="includes/logo.jsp"/>
+            <a href="logout.jsp" class="btn-sair">Sair</a>
+        </div>
     </header>
+
+    <% if (msg != null) {
+        String texto = "";
+        if ("uc_adicionada".equals(msg)) texto = "UC adicionada com sucesso!";
+        else if ("uc_editada".equals(msg)) texto = "UC editada com sucesso!";
+        else if ("uc_excluida".equals(msg)) texto = "UC excluída com sucesso!";
+        else if ("config_salva".equals(msg)) texto = "Alterações salvas com sucesso!";
+        else if ("media_salva".equals(msg)) texto = "Média salva com sucesso!";
+        if (!texto.isEmpty()) { %>
+            <div class="toast-success" id="toastSuccess"><%= texto %></div>
+    <%  }
+    } %>
 
     <main class="dashboard-content">
         <% if (semestres.isEmpty()) { %>
@@ -151,17 +167,13 @@
                                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                                         </svg>
                                     </button>
-                                    <form method="post" action="dashboard.jsp" style="display:inline"
-                                          onsubmit="return confirm('Excluir esta UC?');">
-                                        <input type="hidden" name="action" value="excluirUC">
-                                        <input type="hidden" name="ucId" value="<%= uc.getId() %>">
-                                        <button type="submit" title="Excluir">
+                                    <button type="button" title="Excluir"
+                                            onclick="openExcluirModal('<%= uc.getId() %>', '<%= uc.getNome().replace("'", "\\'") %>')">
                                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <polyline points="3 6 5 6 21 6"/>
                                                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
                                             </svg>
-                                        </button>
-                                    </form>
+                                    </button>
                                 </div>
                             </div>
                             <div class="uc-score">
@@ -225,6 +237,19 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="modalExcluir">
+        <div class="modal-card modal-confirm">
+            <h2>Excluir UC</h2>
+            <p id="excluirMsg">Deseja realmente excluir esta UC?</p>
+            <form method="post" action="dashboard.jsp" class="confirm-actions">
+                <input type="hidden" name="action" value="excluirUC">
+                <input type="hidden" id="excluirUcId" name="ucId" value="">
+                <button type="button" class="btn-cancel" onclick="closeModal('modalExcluir')">Cancelar</button>
+                <button type="submit" class="btn-danger">Excluir</button>
+            </form>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="modalConfig">
         <div class="modal-card">
             <button type="button" class="modal-close" onclick="closeModal('modalConfig')" aria-label="Fechar"></button>
@@ -261,6 +286,12 @@
             document.getElementById(id).classList.remove('active');
         }
 
+        function openExcluirModal(ucId, nome) {
+            document.getElementById('excluirUcId').value = ucId;
+            document.getElementById('excluirMsg').textContent = 'Deseja realmente excluir a UC "' + nome + '"?';
+            openModal('modalExcluir');
+        }
+
         function openEditModal(ucId, nome, semestre) {
             document.getElementById('editUcId').value = ucId;
             document.getElementById('editNomeUC').value = nome;
@@ -279,6 +310,11 @@
                 document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
             }
         });
+
+        setTimeout(function() {
+            var t = document.getElementById('toastSuccess');
+            if (t) t.classList.add('hide');
+        }, 4000);
 
         <% if (ucEditando != null) { %>
         openEditModal('<%= ucEditando.getId() %>', '<%= ucEditando.getNome().replace("'", "\\'") %>', <%= ucEditando.getSemestre() %>);
