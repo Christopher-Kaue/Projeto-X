@@ -120,6 +120,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calcular Média - <%= uc.getNome() %></title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/extras.css">
 </head>
 <body class="dashboard-page">
 

@@ -1,0 +1,10 @@
+.header-right { display: flex; align-items: center; gap: 20px; }
+.btn-sair { font-family: var(--font-sans); font-size: 0.88rem; font-weight: 600; color: var(--fadergs-red); text-decoration: none; padding: 8px 18px; border: 1.5px solid var(--fadergs-red); border-radius: var(--radius-pill); }
+.btn-sair:hover { background: var(--fadergs-red); color: var(--white); }
+.toast-success { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #2e7d32; color: #fff; padding: 12px 28px; border-radius: 50px; font-size: 0.9rem; font-weight: 600; z-index: 2000; box-shadow: 0 4px 16px rgba(0,0,0,0.15); transition: opacity 0.4s; }
+.toast-success.hide { opacity: 0; pointer-events: none; }
+.modal-confirm p { text-align: center; margin-bottom: 24px; color: #555; }
+.confirm-actions { display: flex; gap: 12px; justify-content: center; }
+.btn-cancel { padding: 12px 24px; background: transparent; border: 1.5px solid #ccc; border-radius: 50px; cursor: pointer; font-weight: 600; }
+.btn-danger { padding: 12px 24px; background: #A61D19; color: #fff; border: none; border-radius: 50px; cursor: pointer; font-weight: 600; }
+.btn-danger:hover { background: #8B1512; }
