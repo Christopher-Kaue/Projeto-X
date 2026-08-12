@@ -58,8 +58,12 @@
             for (Avaliacao av : uc.getAvaliacoes()) {
                 if (av.isComposta()) {
                     for (SubAvaliacao sub : av.getSubAvaliacoes()) {
+                        String maxParam = request.getParameter("sub_max_" + sub.getId());
                         String decParam = request.getParameter("sub_dec_" + sub.getId());
                         String pctParam = request.getParameter("sub_pct_" + sub.getId());
+                        if (maxParam != null && !maxParam.trim().isEmpty()) {
+                            try { sub.setMaxPontos(Double.parseDouble(maxParam.trim())); } catch (NumberFormatException ignored) {}
+                        }
                         sub.setNotaDecimal(null);
                         sub.setNotaPercentual(null);
                         if (decParam != null && !decParam.trim().isEmpty()) {
@@ -68,13 +72,20 @@
                             try { sub.setNotaPercentual(Double.parseDouble(pctParam.trim())); } catch (NumberFormatException ignored) {}
                         }
                     }
+                    String novoSubMax = request.getParameter("novo_sub_max");
                     String novoSubDec = request.getParameter("novo_sub_dec");
                     String novoSubPct = request.getParameter("novo_sub_pct");
-                    if ((novoSubDec != null && !novoSubDec.trim().isEmpty())
-                            || (novoSubPct != null && !novoSubPct.trim().isEmpty())) {
+                    boolean temNota = (novoSubDec != null && !novoSubDec.trim().isEmpty())
+                            || (novoSubPct != null && !novoSubPct.trim().isEmpty());
+                    boolean temMax = novoSubMax != null && !novoSubMax.trim().isEmpty();
+                    if (temNota || temMax) {
                         int num = av.getSubAvaliacoes().size() + 1;
                         String subId = "sub-" + UUID.randomUUID().toString().substring(0, 6);
-                        SubAvaliacao novaSub = new SubAvaliacao(subId, "A3." + num);
+                        double maxPts = 10.0;
+                        if (temMax) {
+                            try { maxPts = Double.parseDouble(novoSubMax.trim()); } catch (NumberFormatException ignored) {}
+                        }
+                        SubAvaliacao novaSub = new SubAvaliacao(subId, "A3." + num, maxPts);
                         if (novoSubDec != null && !novoSubDec.trim().isEmpty()) {
                             try { novaSub.setNotaDecimal(Double.parseDouble(novoSubDec.trim())); } catch (NumberFormatException ignored) {}
                         } else if (novoSubPct != null && !novoSubPct.trim().isEmpty()) {
@@ -112,7 +123,12 @@
             if (av3 != null) {
                 int num = av3.getSubAvaliacoes().size() + 1;
                 String subId = "sub-" + UUID.randomUUID().toString().substring(0, 6);
-                SubAvaliacao novaSub = new SubAvaliacao(subId, "A3." + num);
+                double maxPts = 10.0;
+                String novoSubMax = request.getParameter("novo_sub_max");
+                if (novoSubMax != null && !novoSubMax.trim().isEmpty()) {
+                    try { maxPts = Double.parseDouble(novoSubMax.trim()); } catch (NumberFormatException ignored) {}
+                }
+                SubAvaliacao novaSub = new SubAvaliacao(subId, "A3." + num, maxPts);
                 String novoSubDec = request.getParameter("novo_sub_dec");
                 String novoSubPct = request.getParameter("novo_sub_pct");
                 if (novoSubDec != null && !novoSubDec.trim().isEmpty()) {
@@ -206,9 +222,7 @@
             </div>
             <% } %>
 
-            <% if (avComSub != null) {
-                int maxSub = 10;
-            %>
+            <% if (avComSub != null) { %>
             <div class="avaliacao-card avaliacao-card-full">
                 <div class="avaliacao-card-inner">
                     <div class="avaliacao-card-left">
@@ -218,26 +232,40 @@
                             <thead>
                                 <tr>
                                     <th>Avaliação</th>
+                                    <th>Nota máxima</th>
                                     <th>Nota em decimal</th>
                                     <th>Nota em percentual</th>
                                     <th></th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <% for (SubAvaliacao sub : avComSub.getSubAvaliacoes()) { %>
+                                <% for (SubAvaliacao sub : avComSub.getSubAvaliacoes()) {
+                                    String maxVal = (sub.getMaxPontos() == (long) sub.getMaxPontos())
+                                            ? String.valueOf((long) sub.getMaxPontos())
+                                            : String.valueOf(sub.getMaxPontos());
+                                %>
                                 <tr>
                                     <td><%= sub.getTitulo() %></td>
                                     <td>
+                                        <input type="number" name="sub_max_<%= sub.getId() %>"
+                                               id="sub_max_<%= sub.getId() %>"
+                                               step="0.1" min="0.1"
+                                               value="<%= maxVal %>"
+                                               oninput="onSubMaxChange('<%= sub.getId() %>')">
+                                    </td>
+                                    <td>
                                         <input type="number" name="sub_dec_<%= sub.getId() %>"
-                                               step="0.1" min="0" max="<%= maxSub %>"
+                                               id="sub_dec_<%= sub.getId() %>"
+                                               step="0.1" min="0" max="<%= maxVal %>"
                                                value="<%= sub.getNotaDecimal() != null ? sub.getNotaDecimal() : "" %>"
-                                               oninput="syncSubInputs(this, 'sub_pct_<%= sub.getId() %>', true, <%= maxSub %>)">
+                                               oninput="syncSubById('<%= sub.getId() %>', true)">
                                     </td>
                                     <td>
                                         <input type="number" name="sub_pct_<%= sub.getId() %>"
+                                               id="sub_pct_<%= sub.getId() %>"
                                                step="1" min="0" max="100"
                                                value="<%= sub.getNotaPercentual() != null ? sub.getNotaPercentual() : "" %>"
-                                               oninput="syncSubInputs(this, 'sub_dec_<%= sub.getId() %>', false, <%= maxSub %>)">
+                                               oninput="syncSubById('<%= sub.getId() %>', false)">
                                     </td>
                                     <td>
                                         <a href="calcular-media.jsp?ucId=<%= ucId %>&action=removerSub&subId=<%= sub.getId() %>"
@@ -251,17 +279,23 @@
                     </div>
                     <div class="nota-inputs-side">
                         <div class="nota-field">
+                            <label>Nota máxima:</label>
+                            <input type="number" class="input-pill-gray" name="novo_sub_max" id="novo_sub_max"
+                                   step="0.1" min="0.1" value="10"
+                                   oninput="onNovoSubMaxChange()">
+                        </div>
+                        <div class="nota-field">
                             <label>Nota em percentual:</label>
                             <input type="number" class="input-pill-gray" name="novo_sub_pct" id="novo_sub_pct"
                                    step="1" min="0" max="100"
-                                   oninput="syncPair('novo_sub_pct', 'novo_sub_dec', false, <%= maxSub %>)">
+                                   oninput="syncNovoSub(false)">
                         </div>
                         <div class="ou-row">ou</div>
                         <div class="nota-field">
                             <label>Nota em decimal:</label>
                             <input type="number" class="input-pill-gray" name="novo_sub_dec" id="novo_sub_dec"
-                                   step="0.1" min="0" max="<%= maxSub %>"
-                                   oninput="syncPair('novo_sub_dec', 'novo_sub_pct', true, <%= maxSub %>)">
+                                   step="0.1" min="0" max="10"
+                                   oninput="syncNovoSub(true)">
                         </div>
                         <button type="submit" name="action" value="adicionarSub" class="btn-add-sub">
                             + Adicionar Avaliação
@@ -285,6 +319,10 @@
             if (b) b.value = '';
         }
 
+        function formatNota(val) {
+            return val.toFixed(1).replace(/\.0$/, '');
+        }
+
         function syncPair(sourceId, targetId, isDecimal, maxPontos) {
             const source = document.getElementById(sourceId) || document.getElementsByName(sourceId)[0];
             const target = document.getElementById(targetId) || document.getElementsByName(targetId)[0];
@@ -292,21 +330,83 @@
             const val = parseFloat(source.value);
             if (isNaN(val) || !maxPontos) { target.value = ''; return; }
             if (isDecimal) {
-                target.value = ((val / maxPontos) * 100).toFixed(1).replace(/\.0$/, '');
+                target.value = formatNota((val / maxPontos) * 100);
             } else {
-                target.value = ((val / 100) * maxPontos).toFixed(1).replace(/\.0$/, '');
+                target.value = formatNota((val / 100) * maxPontos);
             }
         }
 
-        function syncSubInputs(source, targetName, isDecimal, maxPontos) {
-            const target = document.getElementsByName(targetName)[0];
-            if (!target) return;
-            const val = parseFloat(source.value);
-            if (isNaN(val) || !maxPontos) { target.value = ''; return; }
+        function getSubMax(subId) {
+            const maxInput = document.getElementById('sub_max_' + subId);
+            const max = maxInput ? parseFloat(maxInput.value) : NaN;
+            return (!isNaN(max) && max > 0) ? max : 10;
+        }
+
+        function syncSubById(subId, isDecimal) {
+            const max = getSubMax(subId);
+            const dec = document.getElementById('sub_dec_' + subId);
+            const pct = document.getElementById('sub_pct_' + subId);
+            if (!dec || !pct) return;
+            if (dec) dec.max = max;
             if (isDecimal) {
-                target.value = ((val / maxPontos) * 100).toFixed(1).replace(/\.0$/, '');
+                const val = parseFloat(dec.value);
+                if (isNaN(val)) { pct.value = ''; return; }
+                pct.value = formatNota((val / max) * 100);
             } else {
-                target.value = ((val / 100) * maxPontos).toFixed(1).replace(/\.0$/, '');
+                const val = parseFloat(pct.value);
+                if (isNaN(val)) { dec.value = ''; return; }
+                dec.value = formatNota((val / 100) * max);
+            }
+        }
+
+        function onSubMaxChange(subId) {
+            const max = getSubMax(subId);
+            const dec = document.getElementById('sub_dec_' + subId);
+            if (dec) dec.max = max;
+            if (dec && dec.value !== '') {
+                syncSubById(subId, true);
+            } else {
+                const pct = document.getElementById('sub_pct_' + subId);
+                if (pct && pct.value !== '') {
+                    syncSubById(subId, false);
+                }
+            }
+        }
+
+        function getNovoMax() {
+            const maxInput = document.getElementById('novo_sub_max');
+            const max = maxInput ? parseFloat(maxInput.value) : NaN;
+            return (!isNaN(max) && max > 0) ? max : 10;
+        }
+
+        function syncNovoSub(isDecimal) {
+            const max = getNovoMax();
+            const dec = document.getElementById('novo_sub_dec');
+            const pct = document.getElementById('novo_sub_pct');
+            if (!dec || !pct) return;
+            dec.max = max;
+            if (isDecimal) {
+                const val = parseFloat(dec.value);
+                if (isNaN(val)) { pct.value = ''; return; }
+                pct.value = formatNota((val / max) * 100);
+            } else {
+                const val = parseFloat(pct.value);
+                if (isNaN(val)) { dec.value = ''; return; }
+                dec.value = formatNota((val / 100) * max);
+            }
+        }
+
+        function onNovoSubMaxChange() {
+            const max = getNovoMax();
+            const dec = document.getElementById('novo_sub_dec');
+            if (dec) dec.max = max;
+            if (dec && dec.value !== '') {
+                syncNovoSub(true);
+            } else {
+                const pct = document.getElementById('novo_sub_pct');
+                if (pct && pct.value !== '') {
+                    syncNovoSub(false);
+                }
             }
         }
     </script>

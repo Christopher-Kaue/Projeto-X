@@ -3,3 +3,5 @@
 .input-with-clear { display: flex; align-items: center; gap: 8px; }
 .input-with-clear input { flex: 1; }
 .sub-table td:last-child { width: 36px; text-align: center; }
+.sub-table th:nth-child(2),
+.sub-table td:nth-child(2) { width: 110px; }

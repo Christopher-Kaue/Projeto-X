@@ -50,13 +50,18 @@ public class Avaliacao {
             if (!hasSubAvaliacoes()) {
                 return 0.0;
             }
-            double soma = 0;
-            int count = 0;
+            // Média ponderada pelos pesos (nota máxima) de cada subavaliação
+            double somaPonderada = 0;
+            double somaPesos = 0;
             for (SubAvaliacao sub : subAvaliacoes) {
-                soma += sub.getNotaNormalizada();
-                count++;
+                double peso = sub.getMaxPontos();
+                if (peso <= 0) {
+                    continue;
+                }
+                somaPonderada += sub.getNotaNormalizada() * peso;
+                somaPesos += peso;
             }
-            return count > 0 ? soma / count : 0.0;
+            return somaPesos > 0 ? somaPonderada / somaPesos : 0.0;
         }
         if (notaDecimal != null) {
             return maxPontos > 0 ? notaDecimal / maxPontos : 0.0;
