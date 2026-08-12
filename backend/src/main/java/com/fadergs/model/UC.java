@@ -49,14 +49,12 @@ public class UC {
         return String.format("%.0f/100", getNotaFinal());
     }
 
-    /** Inicializa a estrutura padrão de avaliações (30+30+40 = 100 pts). */
+    /** Inicializa a estrutura padrão de avaliações (30+30+40 = 100 pts). A3 começa sem subavaliações. */
     public void inicializarAvaliacoesPadrao() {
         avaliacoes.clear();
         Avaliacao av1 = new Avaliacao("av1", "A1", 30);
         Avaliacao av2 = new Avaliacao("av2", "A2", 30);
         Avaliacao av3 = new Avaliacao("av3", "A3", 40);
-        av3.getSubAvaliacoes().add(new SubAvaliacao("sub1", "A3.1"));
-        av3.getSubAvaliacoes().add(new SubAvaliacao("sub2", "A3.2"));
         avaliacoes.add(av1);
         avaliacoes.add(av2);
         avaliacoes.add(av3);

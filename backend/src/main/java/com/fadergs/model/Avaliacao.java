@@ -39,9 +39,17 @@ public class Avaliacao {
         return subAvaliacoes != null && !subAvaliacoes.isEmpty();
     }
 
+    /** A3 é composta (pode ter A3.1, A3.2, …) mesmo com a lista vazia. */
+    public boolean isComposta() {
+        return "av3".equals(id) || "A3".equals(titulo);
+    }
+
     /** Retorna a nota normalizada de 0 a 1 para esta avaliação. */
     public double getNotaNormalizada() {
-        if (hasSubAvaliacoes()) {
+        if (isComposta()) {
+            if (!hasSubAvaliacoes()) {
+                return 0.0;
+            }
             double soma = 0;
             int count = 0;
             for (SubAvaliacao sub : subAvaliacoes) {
@@ -51,7 +59,7 @@ public class Avaliacao {
             return count > 0 ? soma / count : 0.0;
         }
         if (notaDecimal != null) {
-            return notaDecimal / 10.0;
+            return maxPontos > 0 ? notaDecimal / maxPontos : 0.0;
         }
         if (notaPercentual != null) {
             return notaPercentual / 100.0;

@@ -70,15 +70,11 @@ public class DataStore {
         if (percentual <= 0) {
             return;
         }
-        double notaDecimal = percentual / 10.0;
         for (Avaliacao av : uc.getAvaliacoes()) {
-            if (av.hasSubAvaliacoes()) {
-                for (SubAvaliacao sub : av.getSubAvaliacoes()) {
-                    sub.setNotaDecimal(notaDecimal);
-                }
-            } else {
-                av.setNotaDecimal(notaDecimal);
+            if (av.isComposta()) {
+                continue;
             }
+            av.setNotaDecimal(percentual / 100.0 * av.getMaxPontos());
         }
     }
 

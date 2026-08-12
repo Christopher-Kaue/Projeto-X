@@ -31,10 +31,16 @@
         String subId = request.getParameter("subId");
         if (subId != null) {
             for (Avaliacao av : uc.getAvaliacoes()) {
-                if (av.hasSubAvaliacoes()) {
-                    av.getSubAvaliacoes().removeIf(s -> s.getId().equals(subId));
+                if (av.isComposta()) {
+                    List<SubAvaliacao> subs = av.getSubAvaliacoes();
+                    for (int i = subs.size() - 1; i >= 0; i--) {
+                        if (subs.get(i).getId().equals(subId)) {
+                            subs.remove(i);
+                            break;
+                        }
+                    }
                     int n = 1;
-                    for (SubAvaliacao s : av.getSubAvaliacoes()) {
+                    for (SubAvaliacao s : subs) {
                         s.setTitulo("A3." + n++);
                     }
                     break;
@@ -50,7 +56,7 @@
 
         if ("salvar".equals(actionParam)) {
             for (Avaliacao av : uc.getAvaliacoes()) {
-                if (av.hasSubAvaliacoes()) {
+                if (av.isComposta()) {
                     for (SubAvaliacao sub : av.getSubAvaliacoes()) {
                         String decParam = request.getParameter("sub_dec_" + sub.getId());
                         String pctParam = request.getParameter("sub_pct_" + sub.getId());
@@ -98,7 +104,7 @@
         if ("adicionarSub".equals(actionParam)) {
             Avaliacao av3 = null;
             for (Avaliacao av : uc.getAvaliacoes()) {
-                if (av.hasSubAvaliacoes()) {
+                if (av.isComposta()) {
                     av3 = av;
                     break;
                 }
@@ -126,7 +132,7 @@
     Avaliacao avComSub = null;
     java.util.ArrayList<Avaliacao> avSimples = new java.util.ArrayList<>();
     for (Avaliacao av : avaliacoes) {
-        if (av.hasSubAvaliacoes()) {
+        if (av.isComposta()) {
             avComSub = av;
         } else {
             avSimples.add(av);
@@ -163,10 +169,11 @@
             <div class="avaliacoes-top-row">
                 <% for (int i = 0; i < 2; i++) {
                     Avaliacao av = avSimples.get(i);
+                    int maxPts = av.getMaxPontos();
                 %>
                 <div class="avaliacao-card">
                     <h3><%= av.getTitulo() %></h3>
-                    <p class="max-pontos">Máximo <%= av.getMaxPontos() %> pontos</p>
+                    <p class="max-pontos">Máximo <%= maxPts %> pontos</p>
                     <div class="nota-inputs-vertical">
                         <div class="nota-field nota-field-clear">
                             <label>Nota em percentual:</label>
@@ -175,7 +182,7 @@
                                        id="pct_<%= av.getId() %>"
                                        step="1" min="0" max="100"
                                        value="<%= av.getNotaPercentual() != null ? av.getNotaPercentual() : "" %>"
-                                       oninput="syncPair('pct_<%= av.getId() %>', 'dec_<%= av.getId() %>', false)">
+                                       oninput="syncPair('pct_<%= av.getId() %>', 'dec_<%= av.getId() %>', false, <%= maxPts %>)">
                                 <button type="button" class="btn-remove-sub" title="Limpar nota"
                                         onclick="limparNota('pct_<%= av.getId() %>','dec_<%= av.getId() %>')">×</button>
                             </div>
@@ -186,9 +193,9 @@
                             <div class="input-with-clear">
                                 <input type="number" class="input-pill-gray" name="dec_<%= av.getId() %>"
                                        id="dec_<%= av.getId() %>"
-                                       step="0.1" min="0" max="10"
+                                       step="0.1" min="0" max="<%= maxPts %>"
                                        value="<%= av.getNotaDecimal() != null ? av.getNotaDecimal() : "" %>"
-                                       oninput="syncPair('dec_<%= av.getId() %>', 'pct_<%= av.getId() %>', true)">
+                                       oninput="syncPair('dec_<%= av.getId() %>', 'pct_<%= av.getId() %>', true, <%= maxPts %>)">
                                 <button type="button" class="btn-remove-sub" title="Limpar nota"
                                         onclick="limparNota('dec_<%= av.getId() %>','pct_<%= av.getId() %>')">×</button>
                             </div>
@@ -199,7 +206,9 @@
             </div>
             <% } %>
 
-            <% if (avComSub != null) { %>
+            <% if (avComSub != null) {
+                int maxSub = 10;
+            %>
             <div class="avaliacao-card avaliacao-card-full">
                 <div class="avaliacao-card-inner">
                     <div class="avaliacao-card-left">
@@ -220,15 +229,15 @@
                                     <td><%= sub.getTitulo() %></td>
                                     <td>
                                         <input type="number" name="sub_dec_<%= sub.getId() %>"
-                                               step="0.1" min="0" max="10"
+                                               step="0.1" min="0" max="<%= maxSub %>"
                                                value="<%= sub.getNotaDecimal() != null ? sub.getNotaDecimal() : "" %>"
-                                               oninput="syncSubInputs(this, 'sub_pct_<%= sub.getId() %>', true)">
+                                               oninput="syncSubInputs(this, 'sub_pct_<%= sub.getId() %>', true, <%= maxSub %>)">
                                     </td>
                                     <td>
                                         <input type="number" name="sub_pct_<%= sub.getId() %>"
                                                step="1" min="0" max="100"
                                                value="<%= sub.getNotaPercentual() != null ? sub.getNotaPercentual() : "" %>"
-                                               oninput="syncSubInputs(this, 'sub_dec_<%= sub.getId() %>', false)">
+                                               oninput="syncSubInputs(this, 'sub_dec_<%= sub.getId() %>', false, <%= maxSub %>)">
                                     </td>
                                     <td>
                                         <a href="calcular-media.jsp?ucId=<%= ucId %>&action=removerSub&subId=<%= sub.getId() %>"
@@ -245,14 +254,14 @@
                             <label>Nota em percentual:</label>
                             <input type="number" class="input-pill-gray" name="novo_sub_pct" id="novo_sub_pct"
                                    step="1" min="0" max="100"
-                                   oninput="syncPair('novo_sub_pct', 'novo_sub_dec', false)">
+                                   oninput="syncPair('novo_sub_pct', 'novo_sub_dec', false, <%= maxSub %>)">
                         </div>
                         <div class="ou-row">ou</div>
                         <div class="nota-field">
                             <label>Nota em decimal:</label>
                             <input type="number" class="input-pill-gray" name="novo_sub_dec" id="novo_sub_dec"
-                                   step="0.1" min="0" max="10"
-                                   oninput="syncPair('novo_sub_dec', 'novo_sub_pct', true)">
+                                   step="0.1" min="0" max="<%= maxSub %>"
+                                   oninput="syncPair('novo_sub_dec', 'novo_sub_pct', true, <%= maxSub %>)">
                         </div>
                         <button type="submit" name="action" value="adicionarSub" class="btn-add-sub">
                             + Adicionar Avaliação
@@ -276,28 +285,28 @@
             if (b) b.value = '';
         }
 
-        function syncPair(sourceId, targetId, isDecimal) {
+        function syncPair(sourceId, targetId, isDecimal, maxPontos) {
             const source = document.getElementById(sourceId) || document.getElementsByName(sourceId)[0];
             const target = document.getElementById(targetId) || document.getElementsByName(targetId)[0];
             if (!source || !target) return;
             const val = parseFloat(source.value);
-            if (isNaN(val)) { target.value = ''; return; }
+            if (isNaN(val) || !maxPontos) { target.value = ''; return; }
             if (isDecimal) {
-                target.value = (val * 10).toFixed(1).replace(/\.0$/, '');
+                target.value = ((val / maxPontos) * 100).toFixed(1).replace(/\.0$/, '');
             } else {
-                target.value = (val / 10).toFixed(1).replace(/\.0$/, '');
+                target.value = ((val / 100) * maxPontos).toFixed(1).replace(/\.0$/, '');
             }
         }
 
-        function syncSubInputs(source, targetName, isDecimal) {
+        function syncSubInputs(source, targetName, isDecimal, maxPontos) {
             const target = document.getElementsByName(targetName)[0];
             if (!target) return;
             const val = parseFloat(source.value);
-            if (isNaN(val)) { target.value = ''; return; }
+            if (isNaN(val) || !maxPontos) { target.value = ''; return; }
             if (isDecimal) {
-                target.value = (val * 10).toFixed(1).replace(/\.0$/, '');
+                target.value = ((val / maxPontos) * 100).toFixed(1).replace(/\.0$/, '');
             } else {
-                target.value = (val / 10).toFixed(1).replace(/\.0$/, '');
+                target.value = ((val / 100) * maxPontos).toFixed(1).replace(/\.0$/, '');
             }
         }
     </script>
