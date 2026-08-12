@@ -5,3 +5,6 @@ services:
     plan: free
     dockerfilePath: ./Dockerfile
     healthCheckPath: /login.jsp
+    envVars:
+      - key: JAVA_OPTS
+        value: -Xmx512m -Xms256m
