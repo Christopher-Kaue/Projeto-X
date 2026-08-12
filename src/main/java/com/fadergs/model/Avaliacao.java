@@ -1,0 +1,66 @@
+package com.fadergs.model;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class Avaliacao {
+    private String id;
+    private String titulo;
+    private int maxPontos;
+    private Double notaDecimal;
+    private Double notaPercentual;
+    private List<SubAvaliacao> subAvaliacoes = new ArrayList<>();
+
+    public Avaliacao(String id, String titulo, int maxPontos) {
+        this.id = id;
+        this.titulo = titulo;
+        this.maxPontos = maxPontos;
+    }
+
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+
+    public String getTitulo() { return titulo; }
+    public void setTitulo(String titulo) { this.titulo = titulo; }
+
+    public int getMaxPontos() { return maxPontos; }
+    public void setMaxPontos(int maxPontos) { this.maxPontos = maxPontos; }
+
+    public Double getNotaDecimal() { return notaDecimal; }
+    public void setNotaDecimal(Double notaDecimal) { this.notaDecimal = notaDecimal; }
+
+    public Double getNotaPercentual() { return notaPercentual; }
+    public void setNotaPercentual(Double notaPercentual) { this.notaPercentual = notaPercentual; }
+
+    public List<SubAvaliacao> getSubAvaliacoes() { return subAvaliacoes; }
+    public void setSubAvaliacoes(List<SubAvaliacao> subAvaliacoes) { this.subAvaliacoes = subAvaliacoes; }
+
+    public boolean hasSubAvaliacoes() {
+        return subAvaliacoes != null && !subAvaliacoes.isEmpty();
+    }
+
+    /** Retorna a nota normalizada de 0 a 1 para esta avaliação. */
+    public double getNotaNormalizada() {
+        if (hasSubAvaliacoes()) {
+            double soma = 0;
+            int count = 0;
+            for (SubAvaliacao sub : subAvaliacoes) {
+                soma += sub.getNotaNormalizada();
+                count++;
+            }
+            return count > 0 ? soma / count : 0.0;
+        }
+        if (notaDecimal != null) {
+            return notaDecimal / 10.0;
+        }
+        if (notaPercentual != null) {
+            return notaPercentual / 100.0;
+        }
+        return 0.0;
+    }
+
+    /** Pontos obtidos nesta avaliação (ponderados pelo maxPontos). */
+    public double getPontosObtidos() {
+        return getNotaNormalizada() * maxPontos;
+    }
+}
