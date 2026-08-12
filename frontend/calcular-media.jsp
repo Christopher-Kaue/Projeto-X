@@ -25,10 +25,30 @@
         return;
     }
 
-    if ("POST".equalsIgnoreCase(request.getMethod())) {
-        String action = request.getParameter("action");
+    String actionParam = request.getParameter("action");
 
-        if ("salvar".equals(action)) {
+    if ("removerSub".equals(actionParam)) {
+        String subId = request.getParameter("subId");
+        if (subId != null) {
+            for (Avaliacao av : uc.getAvaliacoes()) {
+                if (av.hasSubAvaliacoes()) {
+                    av.getSubAvaliacoes().removeIf(s -> s.getId().equals(subId));
+                    int n = 1;
+                    for (SubAvaliacao s : av.getSubAvaliacoes()) {
+                        s.setTitulo("A3." + n++);
+                    }
+                    break;
+                }
+            }
+            store.atualizarUC(uc);
+        }
+        response.sendRedirect("calcular-media.jsp?ucId=" + ucId);
+        return;
+    }
+
+    if ("POST".equalsIgnoreCase(request.getMethod()) && actionParam != null) {
+
+        if ("salvar".equals(actionParam)) {
             for (Avaliacao av : uc.getAvaliacoes()) {
                 if (av.hasSubAvaliacoes()) {
                     for (SubAvaliacao sub : av.getSubAvaliacoes()) {
@@ -75,7 +95,7 @@
             return;
         }
 
-        if ("adicionarSub".equals(action)) {
+        if ("adicionarSub".equals(actionParam)) {
             Avaliacao av3 = null;
             for (Avaliacao av : uc.getAvaliacoes()) {
                 if (av.hasSubAvaliacoes()) {
@@ -121,6 +141,7 @@
     <title>Calcular Média - <%= uc.getNome() %></title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/extras.css">
+    <link rel="stylesheet" href="css/media-extras.css">
 </head>
 <body class="dashboard-page">
 
@@ -147,20 +168,30 @@
                     <h3><%= av.getTitulo() %></h3>
                     <p class="max-pontos">Máximo <%= av.getMaxPontos() %> pontos</p>
                     <div class="nota-inputs-vertical">
-                        <div class="nota-field">
+                        <div class="nota-field nota-field-clear">
                             <label>Nota em percentual:</label>
-                            <input type="number" class="input-pill-gray" name="pct_<%= av.getId() %>"
-                                   step="1" min="0" max="100"
-                                   value="<%= av.getNotaPercentual() != null ? av.getNotaPercentual() : "" %>"
-                                   oninput="syncPair('pct_<%= av.getId() %>', 'dec_<%= av.getId() %>', false)">
+                            <div class="input-with-clear">
+                                <input type="number" class="input-pill-gray" name="pct_<%= av.getId() %>"
+                                       id="pct_<%= av.getId() %>"
+                                       step="1" min="0" max="100"
+                                       value="<%= av.getNotaPercentual() != null ? av.getNotaPercentual() : "" %>"
+                                       oninput="syncPair('pct_<%= av.getId() %>', 'dec_<%= av.getId() %>', false)">
+                                <button type="button" class="btn-remove-sub" title="Limpar nota"
+                                        onclick="limparNota('pct_<%= av.getId() %>','dec_<%= av.getId() %>')">×</button>
+                            </div>
                         </div>
                         <div class="ou-row">ou</div>
-                        <div class="nota-field">
+                        <div class="nota-field nota-field-clear">
                             <label>Nota em decimal:</label>
-                            <input type="number" class="input-pill-gray" name="dec_<%= av.getId() %>"
-                                   step="0.1" min="0" max="10"
-                                   value="<%= av.getNotaDecimal() != null ? av.getNotaDecimal() : "" %>"
-                                   oninput="syncPair('dec_<%= av.getId() %>', 'pct_<%= av.getId() %>', true)">
+                            <div class="input-with-clear">
+                                <input type="number" class="input-pill-gray" name="dec_<%= av.getId() %>"
+                                       id="dec_<%= av.getId() %>"
+                                       step="0.1" min="0" max="10"
+                                       value="<%= av.getNotaDecimal() != null ? av.getNotaDecimal() : "" %>"
+                                       oninput="syncPair('dec_<%= av.getId() %>', 'pct_<%= av.getId() %>', true)">
+                                <button type="button" class="btn-remove-sub" title="Limpar nota"
+                                        onclick="limparNota('dec_<%= av.getId() %>','pct_<%= av.getId() %>')">×</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -180,6 +211,7 @@
                                     <th>Avaliação</th>
                                     <th>Nota em decimal</th>
                                     <th>Nota em percentual</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -197,6 +229,11 @@
                                                step="1" min="0" max="100"
                                                value="<%= sub.getNotaPercentual() != null ? sub.getNotaPercentual() : "" %>"
                                                oninput="syncSubInputs(this, 'sub_dec_<%= sub.getId() %>', false)">
+                                    </td>
+                                    <td>
+                                        <a href="calcular-media.jsp?ucId=<%= ucId %>&action=removerSub&subId=<%= sub.getId() %>"
+                                           class="btn-remove-sub" title="Remover avaliação"
+                                           onclick="return confirm('Remover esta avaliação?');">×</a>
                                     </td>
                                 </tr>
                                 <% } %>
@@ -232,6 +269,13 @@
     </div>
 
     <script>
+        function limparNota(id1, id2) {
+            var a = document.getElementById(id1);
+            var b = document.getElementById(id2);
+            if (a) a.value = '';
+            if (b) b.value = '';
+        }
+
         function syncPair(sourceId, targetId, isDecimal) {
             const source = document.getElementById(sourceId) || document.getElementsByName(sourceId)[0];
             const target = document.getElementById(targetId) || document.getElementsByName(targetId)[0];

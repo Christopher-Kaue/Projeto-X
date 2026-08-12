@@ -1,0 +1,5 @@
+.btn-remove-sub { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border: none; background: #eee; color: #A61D19; border-radius: 50%; font-size: 1rem; line-height: 1; cursor: pointer; text-decoration: none; font-weight: 700; }
+.btn-remove-sub:hover { background: #A61D19; color: #fff; }
+.input-with-clear { display: flex; align-items: center; gap: 8px; }
+.input-with-clear input { flex: 1; }
+.sub-table td:last-child { width: 36px; text-align: center; }

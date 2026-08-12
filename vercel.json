@@ -1,7 +1,6 @@
 {
-  "version": 2,
-  "public": true,
-  "buildCommand": "echo JSP requires Java runtime - use Render deploy",
-  "outputDirectory": "vercel-public",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/login.jsp", "destination": "https://projeto-x.onrender.com/login.jsp" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
